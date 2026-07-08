@@ -1,0 +1,17 @@
+{
+  "name": "flujo-login",
+  "version": "1.0.0",
+  "description": "Componente reutilizable (Web Component nativo) del paso de \"número celular\" para flujos de login o registro. No depende de ningún framework — funciona en HTML plano, React, Vue, Angular, etc.",
+  "main": "otp-verification-step.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1",
+    "node": "^26.4.0"
+  }
+}

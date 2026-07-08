@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="es-MX">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Iniciar sesión</title>
+    <style>
+      :root {
+        /* ============================================ */
+        /*  AQUÍ CAMBIAS TU MARCA (colores generales)    */
+        /* ============================================ */
+        --marca-acento: #3b7dd8;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        display: flex;
+        justify-content: center;
+        padding: 48px 20px;
+        background: #ffffff;
+        margin: 0;
+      }
+
+      .logo-img {
+        height: 40px;
+        width: auto;
+        display: block;
+        margin-bottom: 28px;
+      }
+
+      .oculto {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div style="max-width: 360px; width: 100%">
+      <img src="logo.jpg" alt="Tu Empresa" class="logo-img" />
+
+      <!-- Paso 1: pedir teléfono -->
+      <phone-login-step id="paso1"></phone-login-step>
+
+      <!-- Paso 2: verificar código (oculto hasta que se pida el teléfono) -->
+      <otp-verification-step id="paso2" class="oculto"></otp-verification-step>
+    </div>
+
+    <script src="phone-login-step.js"></script>
+    <script src="otp-verification-step.js"></script>
+    <script>
+      const paso1 = document.getElementById("paso1");
+      const paso2 = document.getElementById("paso2");
+      let telefonoActual = "";
+
+      // Paso 1 -> pide el código y muestra el paso 2
+      paso1.addEventListener("continue", async (evento) => {
+        telefonoActual = evento.detail.telefonoCompleto;
+
+        try {
+          const respuesta = await fetch("/api/enviar-otp", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ telefono: telefonoActual }),
+          });
+
+          if (!respuesta.ok) throw new Error("fallo el envio");
+
+          paso2.setAttribute("telefono", telefonoActual);
+          paso1.classList.add("oculto");
+          paso2.classList.remove("oculto");
+        } catch (error) {
+          paso1.setError("No pudimos enviar el código. Intenta de nuevo.");
+        }
+      });
+
+      // Paso 2 -> guarda el código que haya puesto el usuario y avanza
+      paso2.addEventListener("verify", async (evento) => {
+        const { codigo } = evento.detail;
+
+        try {
+          await fetch("/api/verificar-otp", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ telefono: telefonoActual, codigo }),
+          });
+        } catch (error) {
+          // Aunque falle el guardado, igual dejamos pasar al usuario
+          console.error("No se pudo guardar el código:", error);
+        }
+
+        window.location.href = "/inicio.html";
+      });
+
+      // Paso 2 -> reenviar código (SMS o WhatsApp)
+      paso2.addEventListener("resend", async (evento) => {
+        await fetch("/api/enviar-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            telefono: telefonoActual,
+            canal: evento.detail.canal,
+          }),
+        });
+      });
+    </script>
+  </body>
+</html>

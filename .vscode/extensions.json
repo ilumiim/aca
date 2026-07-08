@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "ritwickdey.liveserver",
+    "formulahendry.auto-rename-tag",
+    "naumovs.color-highlight",
+    "pranaygp.vscode-css-peek"
+  ]
+}
