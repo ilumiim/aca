@@ -22,18 +22,10 @@
         margin: 0;
       }
 
-      .logo {
-        /* ============================================ */
-        /*  AQUÍ PONES TU LOGO (quita el texto de abajo  */
-        /*  y pon <img src="tu-logo.svg" /> en su lugar) */
-        /* ============================================ */
-        display: inline-block;
-        font-weight: 700;
-        font-size: 18px;
-        padding: 10px 20px;
-        border-radius: 20px;
-        background: #eaf2fb;
-        color: var(--marca-acento);
+      .logo-img {
+        height: 40px;
+        width: auto;
+        display: block;
         margin-bottom: 28px;
       }
 
@@ -44,7 +36,7 @@
   </head>
   <body>
     <div style="max-width: 360px; width: 100%">
-      <img src="logo.jpg" alt="Tu Empresa" class="logo=img" />
+      <img src="logo.jpg" alt="Tu Empresa" class="logo-img" />
 
       <!-- Paso 1: pedir teléfono -->
       <phone-login-step id="paso1"></phone-login-step>
