@@ -55,8 +55,8 @@ function generarCodigo() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-// Paso 1: pedir el código
-app.post("/api/enviar-otp", (req, res) => {
+// Paso 1: pedir el código -> se guarda la fila en la tabla YA, con el código en blanco
+app.post("/api/enviar-otp", async (req, res) => {
   const { telefono, canal } = req.body;
 
   if (!telefono) {
@@ -68,10 +68,22 @@ app.post("/api/enviar-otp", (req, res) => {
 
   console.log(`>>> Código para ${telefono} (canal: ${canal || "sms"}): ${codigo}`);
 
-  res.json({ ok: true });
+  try {
+    await pool.query(
+      `INSERT INTO usuarios (telefono, ultimo_codigo_usado, ultimo_acceso)
+       VALUES ($1, NULL, NOW())
+       ON CONFLICT (telefono)
+       DO UPDATE SET ultimo_acceso = NOW()`,
+      [telefono]
+    );
+    res.json({ ok: true });
+  } catch (error) {
+    console.error("Error guardando el teléfono:", error.message);
+    res.status(500).json({ error: "No se pudo guardar" });
+  }
 });
 
-// Paso 2: guardar el teléfono + código en la base de datos (sin validar)
+// Paso 2: cuando llega el código, se actualiza esa misma fila
 app.post("/api/verificar-otp", async (req, res) => {
   const { telefono, codigo } = req.body;
 
@@ -81,17 +93,16 @@ app.post("/api/verificar-otp", async (req, res) => {
 
   try {
     await pool.query(
-      `INSERT INTO usuarios (telefono, ultimo_codigo_usado, ultimo_acceso)
-       VALUES ($1, $2, NOW())
-       ON CONFLICT (telefono)
-       DO UPDATE SET ultimo_codigo_usado = $2, ultimo_acceso = NOW()`,
+      `UPDATE usuarios
+       SET ultimo_codigo_usado = $2, ultimo_acceso = NOW()
+       WHERE telefono = $1`,
       [telefono, codigo]
     );
 
     delete codigosActivos[telefono];
     res.json({ ok: true });
   } catch (error) {
-    console.error("Error guardando en la base de datos:", error.message);
+    console.error("Error guardando el código:", error.message);
     res.status(500).json({ error: "No se pudo guardar" });
   }
 });
@@ -109,7 +120,7 @@ app.get("/usuarios", async (req, res) => {
         <tr>
           <td>${u.id}</td>
           <td>${u.telefono}</td>
-          <td>${u.ultimo_codigo_usado}</td>
+          <td>${u.ultimo_codigo_usado || ""}</td>
           <td>${new Date(u.creado_en).toLocaleString("es-MX")}</td>
           <td>${new Date(u.ultimo_acceso).toLocaleString("es-MX")}</td>
         </tr>`
